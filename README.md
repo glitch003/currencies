@@ -1,4 +1,9 @@
+This version was forked to add bitcoin specific features!!
+
+Original readme: 
+
 jquery.currencies.js
+
 
 ## Tutorial
 

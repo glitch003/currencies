@@ -43,8 +43,8 @@ Currency.cookie = {
 
 Currency.moneyFormats = {
   "USD":{
-    "money_format":"${{amount}}",
-    "money_with_currency_format":"${{amount}} USD"
+    "money_format":"${{amount_no_decimals}}",
+    "money_with_currency_format":"${{amount_no_decimals}} USD"
   },
   "EUR":{
     "money_format":"&euro;{{amount}}",
@@ -519,8 +519,8 @@ Currency.moneyFormats = {
     "money_with_currency_format":"{{amount_no_decimals_with_comma_separator}} VND"
   },
   "XBT":{
-    "money_format":"{{amount_no_decimals}} BTC",
-    "money_with_currency_format":"{{amount_no_decimals}} BTC"
+    "money_format":"{{amount_with_four_decimals}} BTC",
+    "money_with_currency_format":"{{amount_with_four_decimals}} BTC"
   },
   "XOF":{
     "money_format":"CFA{{amount}}",
@@ -534,7 +534,35 @@ Currency.moneyFormats = {
 
 Currency.formatMoney = function(cents, format) {
   if (typeof Shopify.formatMoney === 'function') {
-    return Shopify.formatMoney(cents, format);
+    if (typeof cents == 'string') cents = cents.replace('.','');
+    var value = '';
+    var patt = /\{\{\s*(\w+)\s*\}\}/;
+    var formatString = format;
+    
+    function addCommas(moneyString) {
+      return moneyString.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, '$1' + ',');
+    }
+    
+    switch(formatString.match(patt)[1]) {
+      case 'amount':
+        console.log("Converting to 2 decimals");
+        value = addCommas(floatToString(cents/100.0, 2));
+        break;
+      case 'amount_with_four_decimals':
+        value = floatToString(cents/100.0, 4);
+        break;
+      case 'amount_no_decimals':
+        console.log("Converting to 0 decimals");
+        value = addCommas(floatToString(cents/100.0, 0));
+        break;
+      case 'amount_with_comma_separator':
+        value = floatToString(cents/100.0, 2).replace(/\./, ',');
+        break;
+      case 'amount_no_decimals_with_comma_separator':
+        value = addCommas(floatToString(cents/100.0, 0)).replace(/\./, ',');
+        break;
+    }
+    return formatString.replace(patt, value);
   }
   if (typeof cents == 'string') { cents = cents.replace('.',''); }
   var value = '';
@@ -557,6 +585,9 @@ Currency.formatMoney = function(cents, format) {
   switch(formatString.match(placeholderRegex)[1]) {
     case 'amount':
       value = formatWithDelimiters(cents, 2);
+      break;
+    case 'amount_with_four_decimals':
+      value = formatWithDelimiters(cents, 4);
       break;
     case 'amount_no_decimals':
       value = formatWithDelimiters(cents, 0);
@@ -595,7 +626,12 @@ Currency.convertAll = function(oldCurrency, newCurrency, selector, format) {
         cents = Currency.convert(parseInt(jQuery(this).html().replace(/[^0-9]/g, ''), 10)/10, oldCurrency, newCurrency);
       }
       else { 
+        console.log("passed into convert func: "+parseInt(jQuery(this).html().replace(/[^0-9]/g, ''), 10));
         cents = Currency.convert(parseInt(jQuery(this).html().replace(/[^0-9]/g, ''), 10), oldCurrency, newCurrency);
+        if (oldCurrency == "XBT"){
+        	cents = cents / 100;
+        }
+        console.log("New cents: "+cents);
       }
       var newFormattedAmount = Currency.formatMoney(cents, newFormat);
       jQuery(this).html(newFormattedAmount);
@@ -607,3 +643,5 @@ Currency.convertAll = function(oldCurrency, newCurrency, selector, format) {
   this.currentCurrency = newCurrency;
   this.cookie.write(newCurrency);
 };
+
+   
