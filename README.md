@@ -1,4 +1,5 @@
-This version was forked to add bitcoin specific features!!
+This version was forked to add bitcoin specific features.  Specifically, it polls the bitpay API on every single pageload (terrible, I know) and then adjusts the prices on the page to be more current.  This is because shopify's built in currency object's exchange rates are only updated every 12 hours and bitcoin is volatile.
+
 
 Original readme: 
 
